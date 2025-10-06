@@ -31,27 +31,36 @@ O principal diferencial é o **motor de Priorização de Urgência Automática**
 
 Assumindo que você já clonou o repositório e está no diretório do projeto:
 
-```bash
 # Cria e ativa o ambiente virtual
+```bash
 python -m venv venv
-
+```
 # Windows:
+```bash
 .\venv\Scripts\activate
-
+```
 # macOS/Linux:
+```bash
 source venv/bin/activate
+```
 
 # Instala as dependências (Flask)
+```bash
 pip install -r requirements.txt
+```
 
 2. Rodar a Aplicação
 Com o ambiente virtual ativado, execute o servidor Flask. O banco de dados tasks.db será criado automaticamente.
 
 # 1. Define o arquivo principal do Flask
+```bash
 export FLASK_APP=app.py 
+```
 
 # 2. Inicia o servidor
+```bash
 flask run
-
+```
 3. Acesso
+```bash
 Abra seu navegador e acesse: http://127.0.0.1:5000/
