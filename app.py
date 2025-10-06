@@ -1,24 +1,45 @@
 import sqlite3
 import json
-from flask import Flask, jsonify, request, g, send_file
-from datetime import datetime
 import os
+from flask import Flask, jsonify, request, g, render_template
 
-# Configuração do Flask
-app = Flask(__name__)
-# Nome do arquivo do banco de dados SQLite
+# Configuração
+app = Flask(__name__, template_folder='templates')
 DATABASE = 'tasks.db'
 
-# --- Funções de Conexão com o Banco de Dados ---
+# --- Funções de Conexão e Utilitários do Banco de Dados ---
 
 def get_db():
-    """Obtém a conexão com o banco de dados."""
+    """Obtém ou cria a conexão com o banco de dados."""
     db = getattr(g, '_database', None)
     if db is None:
         db = g._database = sqlite3.connect(DATABASE)
-        # Configura a conexão para retornar linhas como dicionários (útil para JSON)
+        # Retorna linhas como dicionários para fácil conversão para JSON
         db.row_factory = sqlite3.Row
     return db
+
+def query_db(query, args=(), one=False):
+    """Função utilitária para executar queries no banco de dados."""
+    db = get_db()
+    cursor = db.cursor()
+    try:
+        cursor.execute(query, args)
+        db.commit()
+        # Se for um SELECT, retorna os resultados
+        if query.strip().upper().startswith("SELECT"):
+            rv = cursor.fetchall()
+            return (rv[0] if rv else None) if one else rv
+        # Se for um INSERT, retorna o ID inserido
+        elif query.strip().upper().startswith("INSERT"):
+            return cursor.lastrowid
+        # Para UPDATE/DELETE, retorna a contagem de linhas afetadas
+        return cursor.rowcount
+    except sqlite3.Error as e:
+        print(f"Erro no banco de dados: {e}")
+        # Lança o erro novamente para ser capturado pela rota Flask
+        raise e
+    finally:
+        cursor.close()
 
 @app.teardown_appcontext
 def close_connection(exception):
@@ -28,12 +49,12 @@ def close_connection(exception):
         db.close()
 
 def init_db():
-    """Cria a tabela de tarefas se ela não existir e garante que colunas existam."""
+    """Cria a tabela de tarefas se ela não existir."""
     with app.app_context():
+        # Usa um cursor separado para garantir que a conexão seja aberta
+        # e a tabela criada de forma segura.
         db = get_db()
         cursor = db.cursor()
-        
-        # Cria a tabela principal se não existir (Mantendo 'priority' para evitar erros de schema)
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS tasks (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -41,43 +62,45 @@ def init_db():
                 description TEXT,
                 due_date TEXT,
                 status INTEGER NOT NULL DEFAULT 0,
-                priority INTEGER NOT NULL DEFAULT 1 -- Coluna mantida, mas não usada pelo frontend
+                priority INTEGER NOT NULL DEFAULT 1 
             );
         ''')
         db.commit()
         print("Banco de dados inicializado/atualizado em tasks.db")
 
-# Inicializa o banco de dados quando o script é executado
-with app.app_context():
-    init_db()
+# Inicializa o banco de dados
+init_db()
 
-# --- Rotas da API (CRUD) ---
+# --- Rotas da Aplicação ---
 
 @app.route('/')
 def index():
-    """Serve o arquivo HTML principal."""
+    """Serve o arquivo HTML principal da aplicação (index.html)."""
+    # Usa render_template, que busca o arquivo na pasta 'templates'
     try:
-        return send_file('index.html')
-    except FileNotFoundError:
-        return "Erro: Arquivo index.html não encontrado.", 404
+        return render_template('index.html')
+    except Exception as e:
+        # Erro mais específico se o template não for encontrado
+        return f"Erro: Arquivo index.html não encontrado na pasta 'templates'. Detalhe: {e}", 404
 
 @app.route('/tasks', methods=['GET'])
 def get_tasks():
-    """Retorna todas as tarefas salvas, ordenadas apenas por Status e Data (a ordenação de urgência é feita no frontend)."""
-    db = get_db()
-    cursor = db.cursor()
-    # Ordem: status (0=pendente primeiro), due_date (mais próxima primeiro)
-    cursor.execute("SELECT id, title, description, due_date, status, priority FROM tasks ORDER BY status ASC, due_date ASC")
-    tasks = cursor.fetchall()
+    """Retorna todas as tarefas salvas."""
+    try:
+        # A ordenação por status e data é mantida no backend
+        tasks = query_db("SELECT id, title, description, due_date, status, priority FROM tasks ORDER BY status ASC, due_date ASC")
+        
+        # Converte a lista de objetos Row para dicionários e o status para boolean
+        tasks_list = []
+        for task in tasks:
+            task_dict = dict(task)
+            task_dict['is_completed'] = bool(task_dict.pop('status'))
+            tasks_list.append(task_dict)
 
-    tasks_list = [dict(task) for task in tasks]
+        return jsonify(tasks_list)
+    except Exception as e:
+        return jsonify({'error': f'Erro ao buscar tarefas: {str(e)}'}), 500
 
-    # Converte o status (INTEGER) para BOOLEAN para o frontend
-    for task in tasks_list:
-        task['is_completed'] = bool(task['status'])
-        del task['status']
-
-    return jsonify(tasks_list)
 
 @app.route('/tasks', methods=['POST'])
 def add_task():
@@ -85,22 +108,18 @@ def add_task():
     data = request.get_json()
     title = data.get('title')
     description = data.get('description', '')
-    due_date = data.get('due_date', None) # Data pode ser nula
+    # O valor None é mantido se a data não for fornecida
+    due_date = data.get('due_date') or None 
     
     if not title:
         return jsonify({'error': 'O título é obrigatório.'}), 400
 
-    db = get_db()
-    cursor = db.cursor()
     try:
-        # A coluna 'priority' será salva com o valor padrão 1 (Baixa), mas ignorada pelo frontend
-        cursor.execute(
+        new_id = query_db(
             "INSERT INTO tasks (title, description, due_date, status, priority) VALUES (?, ?, ?, ?, ?)",
             (title, description, due_date, 0, 1) 
         )
-        db.commit()
-        new_task_id = cursor.lastrowid
-        return jsonify({'id': new_task_id, 'message': 'Tarefa adicionada com sucesso!'}), 201
+        return jsonify({'id': new_id, 'message': 'Tarefa adicionada com sucesso!'}), 201
     except Exception as e:
         return jsonify({'error': f'Erro ao adicionar tarefa: {str(e)}'}), 500
 
@@ -108,20 +127,21 @@ def add_task():
 def update_task(task_id):
     """Atualiza uma tarefa existente (título, descrição, data ou status)."""
     data = request.get_json()
-    db = get_db()
-    cursor = db.cursor()
 
+    # Prepara o status (0 ou 1) se is_completed for fornecido
     if 'is_completed' in data:
-        data['status'] = 1 if data['is_completed'] else 0
-        del data['is_completed']
-
+        data['status'] = 1 if data.pop('is_completed') else 0
+    
     set_clauses = []
     values = []
+    
+    # Montagem dinâmica e segura da query de atualização
+    allowed_fields = ['title', 'description', 'due_date', 'status']
     for key, value in data.items():
-        # Remove 'priority' dos campos que podem ser atualizados
-        if key in ['title', 'description', 'due_date', 'status']: 
+        if key in allowed_fields: 
             set_clauses.append(f"{key} = ?")
-            values.append(value)
+            # Converte data vazia para None para SQLite
+            values.append(value if value != '' else None) 
 
     if not set_clauses:
         return jsonify({'error': 'Nenhum campo válido para atualização fornecido.'}), 400
@@ -130,9 +150,8 @@ def update_task(task_id):
     query = f"UPDATE tasks SET {', '.join(set_clauses)} WHERE id = ?"
 
     try:
-        cursor.execute(query, values)
-        db.commit()
-        if cursor.rowcount == 0:
+        row_count = query_db(query, values)
+        if row_count == 0:
             return jsonify({'error': 'Tarefa não encontrada.'}), 404
         return jsonify({'message': 'Tarefa atualizada com sucesso!'}), 200
     except Exception as e:
@@ -141,16 +160,14 @@ def update_task(task_id):
 @app.route('/tasks/<int:task_id>', methods=['DELETE'])
 def delete_task(task_id):
     """Exclui uma tarefa pelo ID."""
-    db = get_db()
-    cursor = db.cursor()
     try:
-        cursor.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
-        db.commit()
-        if cursor.rowcount == 0:
+        row_count = query_db("DELETE FROM tasks WHERE id = ?", (task_id,))
+        if row_count == 0:
             return jsonify({'error': 'Tarefa não encontrada.'}), 404
         return jsonify({'message': 'Tarefa excluída com sucesso!'}), 200
     except Exception as e:
         return jsonify({'error': f'Erro ao excluir tarefa: {str(e)}'}), 500
 
+# O bloco if __name__ é mantido para clareza
 if __name__ == '__main__':
     print("Servidor Flask configurado. Use 'py -m flask run' para iniciar.")

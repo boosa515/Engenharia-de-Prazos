@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Engenharia de Prazos: Task Manager Inteligente</title>
-    <!-- Carrega Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Padrão: DARK MODE */
@@ -172,7 +171,6 @@
 </head>
 <body class="p-4 sm:p-8">
 
-    <!-- Toggle de Tema (Posicionado FIXO no canto) -->
     <button id="theme-toggle" 
             class="fixed top-4 right-4 sm:top-8 sm:right-8 p-4 rounded-full text-2xl z-20 transition duration-300 transform hover:scale-110"
             style="background-color: var(--card-bg); border: 2px solid var(--primary-accent);"
@@ -193,12 +191,10 @@
             <p class="text-xl text-secondary" style="color: var(--text-secondary);">Gerenciamento de Fluxo de Trabalho e Urgência Automática</p>
         </header>
         
-        <!-- --- VIEW PRINCIPAL (Filtros e Lista) --- -->
         <div id="main-view" class="transition duration-300">
             
-            <!-- 1. Seção de Filtros -->
             <div class="card p-4 mb-6">
-                <h3 class="text-lg font-semibold text-header mb-2">Filtros de Urgência</h3>
+                <h3 class="text-lg font-semibold text-header mb-2">Filtros</h3>
                 <div id="filter-buttons" class="flex flex-wrap gap-2 justify-center">
                     <button data-filter="all" class="filter-btn px-4 py-2 font-medium transition active-filter">
                         Todos
@@ -224,7 +220,6 @@
                 </div>
             </div>
 
-            <!-- 2. Seção da Lista de Tarefas -->
             <div class="card p-6 mb-20">
                 <h2 class="text-2xl font-bold text-header mb-4 border-b border-solid pb-2" style="border-color: var(--border-color);">Minhas Tarefas Pendentes</h2>
                 <div id="tasks-list" class="space-y-4">
@@ -232,7 +227,6 @@
                 </div>
             </div>
 
-            <!-- Botão Flutuante de Adicionar Tarefa (Footer) -->
             <div class="fixed bottom-0 left-0 w-full p-4 bg-transparent backdrop-blur-sm z-10" style="background-color: var(--bg-color);">
                 <div class="max-w-4xl mx-auto">
                     <button onclick="showView('add')"
@@ -244,20 +238,16 @@
             </div>
         </div>
 
-        <!-- --- VIEW DE ADIÇÃO DE TAREFA (Oculta por padrão) --- -->
         <div id="add-task-view" class="hidden transition duration-300">
             
-            <!-- Botão de Voltar -->
             <button onclick="showView('main')"
                     class="back-btn flex items-center mb-8 text-xl font-semibold p-2 rounded transition duration-200 hover:bg-opacity-10" style="color: var(--text-color);">
-                <!-- Ícone de Seta para Esquerda -->
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="m15 18-6-6 6-6"/></svg>
-                Back
+                Voltar
             </button>
             
-            <!-- Seção de Adicionar Nova Tarefa (Formulário) -->
             <div class="card p-6 mb-8 transition duration-300">
-                <h2 class="text-2xl font-bold text-header mb-4 border-b border-solid pb-2" style="border-color: var(--border-color);">Criar Nova Atividade</h2>
+                <h2 class="text-2xl font-bold text-header mb-4 border-b border-solid pb-2" style="border-color: var(--border-color);">+ Adicionar Tarefa</h2>
                 <form id="task-form" class="grid grid-cols-1 md:grid-cols-6 gap-4">
                     
                     <input type="text" id="task-title" placeholder="Título da Tarefa (Ex: Relatório de Física)" required
@@ -278,7 +268,6 @@
             </div>
         </div>
 
-        <!-- Modal de Edição (Mantido fora das views para ser acessível em ambas) -->
         <div id="edit-modal" class="hidden fixed inset-0 backdrop-blur-sm bg-gray-900 bg-opacity-70 flex justify-center items-center p-4 z-50">
             <div class="card p-8 w-full max-w-lg">
                 <h3 class="text-2xl font-bold mb-4 text-header">Editar Tarefa</h3>
@@ -315,17 +304,21 @@
     </div>
 
     <script>
-        const mainView = document.getElementById('main-view');
-        const addTaskView = document.getElementById('add-task-view');
-        const taskList = document.getElementById('tasks-list');
-        const taskForm = document.getElementById('task-form');
-        const editModal = document.getElementById('edit-modal');
-        const editForm = document.getElementById('edit-form');
-        const filterButtons = document.getElementById('filter-buttons');
-        const loadingMessage = document.getElementById('loading-message');
-        const themeToggle = document.getElementById('theme-toggle');
-        const sunIcon = document.getElementById('sun-icon');
-        const moonIcon = document.getElementById('moon-icon');
+        // Seletores de Elementos
+        const $ = selector => document.querySelector(selector);
+        const $$ = selector => document.querySelectorAll(selector);
+
+        const mainView = $('#main-view');
+        const addTaskView = $('#add-task-view');
+        const taskList = $('#tasks-list');
+        const taskForm = $('#task-form');
+        const editModal = $('#edit-modal');
+        const editForm = $('#edit-form');
+        const filterButtons = $('#filter-buttons');
+        const loadingMessage = $('#loading-message');
+        const themeToggle = $('#theme-toggle');
+        const sunIcon = $('#sun-icon');
+        const moonIcon = $('#moon-icon');
 
         const API_URL = '/tasks';
 
@@ -333,7 +326,7 @@
         let currentFilter = 'all'; 
         
         // --- Lógica de Navegação ---
-        function showView(viewName) {
+        const showView = (viewName) => {
             if (viewName === 'main') {
                 mainView.classList.remove('hidden');
                 addTaskView.classList.add('hidden');
@@ -346,7 +339,7 @@
         }
 
         // --- Lógica de Tema (Dark/Light Mode) ---
-        function applyTheme(theme) {
+        const applyTheme = (theme) => {
             const isDarkMode = theme === 'dark';
             document.body.classList.toggle('light-mode', !isDarkMode);
             moonIcon.classList.toggle('hidden', !isDarkMode);
@@ -359,20 +352,24 @@
             applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
         });
 
-        function loadTheme() {
+        const loadTheme = () => {
             const savedTheme = localStorage.getItem('theme');
             if (savedTheme) {
                 applyTheme(savedTheme);
             } else {
+                // Tema padrão: Dark
                 applyTheme('dark'); 
             }
         }
 
-        // --- LÓGICA DO APP ---
+        // --- LÓGICA DO APP - Requisição de Dados ---
         
         const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-        async function safeFetch(url, options = {}) {
+        /** * Função de fetch robusta com lógica de retry, mantendo a implementação original, 
+         * mas com estrutura de código mais limpa.
+         */
+        const safeFetch = async (url, options = {}) => {
             let delay = 100;
             const maxRetries = 3;
 
@@ -381,6 +378,7 @@
                     const response = await fetch(url, options);
 
                     if (!response.ok) {
+                        // Tenta novamente, exceto se for erro 404
                         if (response.status !== 404 && i < maxRetries - 1) {
                             console.warn(`Erro ${response.status} na API. Tentando novamente em ${delay}ms...`);
                             await sleep(delay);
@@ -406,18 +404,21 @@
             }
         }
         
-        function getDaysUntil(dateString) {
+        // --- LÓGICA DO APP - Cálculo de Urgência ---
+
+        const getDaysUntil = (dateString) => {
             if (!dateString) return Infinity;
             const oneDay = 1000 * 60 * 60 * 24;
             const today = new Date();
             today.setHours(0, 0, 0, 0); 
-            const taskDate = new Date(dateString + 'T00:00:00');
+            // Garante que a data seja interpretada em UTC para evitar problemas de timezone
+            const taskDate = new Date(dateString + 'T00:00:00'); 
 
             const diffTime = taskDate.getTime() - today.getTime();
             return Math.ceil(diffTime / oneDay); 
         }
 
-        function calculateUrgencyLevel(task) {
+        const calculateUrgencyLevel = (task) => {
             if (task.is_completed) return { level: 0, name: 'Finalizada', sortValue: -1, cssClass: 'completed' }; 
 
             const daysUntil = getDaysUntil(task.due_date);
@@ -443,50 +444,40 @@
 
         // --- FUNÇÕES DE FILTRAGEM ---
 
-        function filterTasks(filterType) {
+        const filterTasks = (filterType) => {
             let filteredList = allTasks;
             
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.classList.remove('active-filter');
-            });
-            const activeBtn = document.querySelector(`[data-filter="${filterType}"]`);
+            $$('.filter-btn').forEach(btn => btn.classList.remove('active-filter'));
+            const activeBtn = $(`[data-filter="${filterType}"]`);
             if (activeBtn) {
                  activeBtn.classList.add('active-filter');
             }
 
+            // Mapeamento do nome do filtro para o nome da urgência
+            const urgencyMap = {
+                'expired': 'EXPIRADA',
+                'urgente': 'URGENTE',
+                'alta': 'ALTA',
+                'media': 'MÉDIA',
+                'baixa': 'BAIXA'
+            };
 
-            switch (filterType) {
-                case 'expired':
-                    filteredList = allTasks.filter(task => calculateUrgencyLevel(task).name === 'EXPIRADA' && !task.is_completed);
-                    break;
-                case 'urgente':
-                    filteredList = allTasks.filter(task => calculateUrgencyLevel(task).name === 'URGENTE' && !task.is_completed);
-                    break;
-                case 'alta':
-                    filteredList = allTasks.filter(task => calculateUrgencyLevel(task).name === 'ALTA' && !task.is_completed);
-                    break;
-                case 'media':
-                    filteredList = allTasks.filter(task => calculateUrgencyLevel(task).name === 'MÉDIA' && !task.is_completed);
-                    break;
-                case 'baixa':
-                    filteredList = allTasks.filter(task => calculateUrgencyLevel(task).name === 'BAIXA' && !task.is_completed);
-                    break;
-                case 'completed':
-                    filteredList = allTasks.filter(task => task.is_completed);
-                    break;
-                case 'all':
-                default:
-                    filteredList = allTasks; 
-                    break;
+            if (filterType === 'completed') {
+                filteredList = allTasks.filter(task => task.is_completed);
+            } else if (filterType !== 'all') {
+                const requiredUrgency = urgencyMap[filterType];
+                filteredList = allTasks.filter(task => 
+                    calculateUrgencyLevel(task).name === requiredUrgency && !task.is_completed
+                );
             }
             
             renderTaskList(filteredList);
             currentFilter = filterType;
         }
 
-        /*  RENDERIZAÇÃO */
+        /* RENDERIZAÇÃO */
 
-        function formatDueDate(dateString) {
+        const formatDueDate = (dateString) => {
             if (!dateString) return 'Sem Data';
             const days = getDaysUntil(dateString);
 
@@ -498,58 +489,60 @@
             return `${day}/${month}/${year}`;
         }
 
-        function renderTask(task) {
+        const renderTask = (task) => {
+            // Desestruturação para melhor legibilidade
+            const { id, title, description, due_date, is_completed } = task; 
+
             const urgency = calculateUrgencyLevel(task);
             const priorityClass = `priority-${urgency.cssClass}`;
             const priorityLabelClass = `priority-label-${urgency.cssClass}`;
             
-            const itemClass = task.is_completed 
+            const itemClass = is_completed 
                 ? 'completed' 
                 : (urgency.name === 'EXPIRADA' ? 'priority-expirada card' : `card ${priorityClass}`);
             
             const taskElement = document.createElement('div');
             taskElement.className = `task-item p-4 rounded-xl flex items-start space-x-4 ${itemClass}`;
-            taskElement.dataset.id = task.id;
+            taskElement.dataset.id = id;
 
             const checkboxHtml = `
-                <input type="checkbox" ${task.is_completed ? 'checked' : ''}
+                <input type="checkbox" ${is_completed ? 'checked' : ''}
                        class="mt-1 h-5 w-5 rounded cursor-pointer" style="border-color: var(--border-color); background-color: var(--input-bg); color: var(--primary-accent);"
-                       onchange="toggleStatus(${task.id}, event.target.checked)">
+                       onchange="toggleStatus(${id}, event.target.checked)">
             `;
             
             const isExpired = urgency.name === 'EXPIRADA';
-            const dateLabelClass = task.is_completed ? 'bg-emerald-800 text-emerald-300' : (isExpired ? 'priority-label-expirada' : priorityLabelClass);
+            const dateLabelClass = is_completed ? 'bg-emerald-800 text-emerald-300' : (isExpired ? 'priority-label-expirada' : priorityLabelClass);
 
             const contentHtml = `
                 <div class="flex-1 min-w-0">
                     <div class="flex items-center space-x-2 mb-1">
-                        <span class="task-title text-lg font-semibold text-header truncate">${task.title}</span>
+                        <span class="task-title text-lg font-semibold text-header truncate">${title}</span>
                         <span class="text-xs font-medium px-2 py-0.5 rounded-full ${dateLabelClass}">
-                            ${formatDueDate(task.due_date)}
+                            ${formatDueDate(due_date)}
                         </span>
-                        ${!task.is_completed ? 
+                        ${!is_completed ? 
                             `<span class="text-xs font-medium px-2 py-0.5 rounded-full ${priorityLabelClass}" title="Nível de Urgência: ${urgency.name}">
                                 ${urgency.name}
                             </span>` : ''}
                     </div>
-                    <p class="task-description text-sm" style="color: var(--text-secondary);">${task.description || 'Nenhuma descrição fornecida.'}</p>
+                    <p class="task-description text-sm" style="color: var(--text-secondary);">${description || 'Nenhuma descrição fornecida.'}</p>
                 </div>
             `;
 
-            const safeDescription = (task.description || '').replace(/'/g, "\\'").replace(/"/g, '\\"');
+            // Escapando a descrição para uso seguro no atributo onclick
+            const safeDescription = (description || '').replace(/'/g, "\\'").replace(/"/g, '\\"');
             
             const actionsHtml = `
                 <div class="flex space-x-2 ml-4">
-                    <button onclick="openEditModal(${task.id}, '${task.title}', '${safeDescription}', '${task.due_date}')"
+                    <button onclick="openEditModal(${id}, '${title}', '${safeDescription}', '${due_date || ''}')"
                             title="Editar"
                             class="p-2 rounded-full transition duration-150 hover:opacity-80" style="color: var(--text-secondary); background-color: var(--input-bg);">
-                        <!-- Ícone de Lápis (Lucide Icon) -->
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
                     </button>
-                    <button onclick="deleteTask(${task.id})"
+                    <button onclick="deleteTask(${id})"
                             title="Excluir"
                             class="p-2 rounded-full transition duration-150 hover:opacity-80" style="color: var(--text-secondary); background-color: var(--input-bg);">
-                        <!-- Ícone de Lixo (Lucide Icon) -->
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                     </button>
                 </div>
@@ -559,7 +552,7 @@
             return taskElement;
         }
 
-        function renderTaskList(tasks) {
+        const renderTaskList = (tasks) => {
              taskList.innerHTML = '';
              if (tasks.length === 0) {
                  taskList.innerHTML = `
@@ -569,16 +562,14 @@
                  `;
                  return;
              }
-             tasks.forEach(task => {
-                 taskList.appendChild(renderTask(task));
-             });
+             tasks.forEach(task => taskList.appendChild(renderTask(task)));
         }
 
 
-        async function loadTasks() {
+        const loadTasks = async () => {
+            loadingMessage.textContent = 'Carregando tarefas...';
+            taskList.innerHTML = '';
             try {
-                loadingMessage.textContent = 'Carregando tarefas...';
-                taskList.innerHTML = '';
                 const response = await safeFetch(API_URL);
                 allTasks = response; 
 
@@ -590,28 +581,29 @@
                     `;
                 }
                 
-                /*  ORDENAÇÃO CLIENTE-SIDE POR URGÊNCIA */
+                /* ORDENAÇÃO CLIENTE-SIDE POR URGÊNCIA */
                 allTasks.sort((a, b) => {
                     const urgencyA = calculateUrgencyLevel(a);
                     const urgencyB = calculateUrgencyLevel(b);
 
-                    /* 1. Concluídas vão para o final */
+                    // 1. Concluídas vão para o final
                     if (a.is_completed !== b.is_completed) {
                         return a.is_completed ? 1 : -1;
                     }
 
-                    /* 2. Prioridade de Urgência (sortValue)*/
+                    // 2. Prioridade de Urgência (sortValue)
                     if (urgencyA.sortValue !== urgencyB.sortValue) {
                         return urgencyB.sortValue - urgencyA.sortValue; 
                     }
                     
-                    /* 3. Data de Entrega */
-                    if (a.due_date && b.due_date) {
-                         const daysA = getDaysUntil(a.due_date);
-                         const daysB = getDaysUntil(b.due_date);
+                    // 3. Data de Entrega (mais próxima primeiro)
+                    const daysA = getDaysUntil(a.due_date);
+                    const daysB = getDaysUntil(b.due_date);
+                    if (daysA !== daysB) {
                          return daysA - daysB; 
                     }
 
+                    // 4. ID (mais novo primeiro se tudo mais for igual)
                     return b.id - a.id; 
                 });
 
@@ -619,6 +611,7 @@
 
             } catch (error) {
                 console.log('Não foi possível carregar a lista de tarefas.');
+                // A mensagem de erro já é tratada dentro do safeFetch
             }
         }
 
@@ -626,9 +619,9 @@
 
         taskForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const titleInput = document.getElementById('task-title');
-            const descriptionInput = document.getElementById('task-description');
-            const dueDateInput = document.getElementById('task-due-date');
+            const titleInput = $('#task-title');
+            const descriptionInput = $('#task-description');
+            const dueDateInput = $('#task-due-date');
 
             const newTask = {
                 title: titleInput.value,
@@ -644,13 +637,13 @@
                 });
 
                 taskForm.reset();
-                showView('main'); // Volta para a página principal
+                showView('main'); 
             } catch (error) {
                 console.error("Erro ao adicionar tarefa:", error);
             }
         });
 
-        async function toggleStatus(id, isCompleted) {
+        const toggleStatus = async (id, isCompleted) => {
             try {
                 await safeFetch(`${API_URL}/${id}`, {
                     method: 'PUT',
@@ -663,36 +656,33 @@
             }
         }
 
-        async function deleteTask(id) {
-            const confirmed = true; 
-            if (confirmed) {
-                try {
-                    await safeFetch(`${API_URL}/${id}`, {
-                        method: 'DELETE'
-                    });
-                    allTasks = allTasks.filter(task => task.id !== id);
-                    filterTasks(currentFilter);
-                    
-                    if (allTasks.length === 0) {
-                        loadTasks();
-                    }
-                } catch (error) {
-                    console.error("Erro ao excluir tarefa:", error);
-                }
+        const deleteTask = async (id) => {
+            if (!confirm("Tem certeza que deseja excluir esta tarefa?")) return;
+            
+            try {
+                await safeFetch(`${API_URL}/${id}`, {
+                    method: 'DELETE'
+                });
+                // Remove do array local e re-renderiza sem recarregar tudo
+                allTasks = allTasks.filter(task => task.id !== id);
+                filterTasks(currentFilter);
+            } catch (error) {
+                console.error("Erro ao excluir tarefa:", error);
             }
         }
 
         /* MODAL DE EDIÇÃO */
 
-        function openEditModal(id, title, description, dueDate) {
-            document.getElementById('edit-form').dataset.taskId = id;
-            document.getElementById('edit-title').value = title;
-            document.getElementById('edit-description').value = description;
-            document.getElementById('edit-due-date').value = dueDate || '';
+        const openEditModal = (id, title, description, dueDate) => {
+            $('#edit-form').dataset.taskId = id;
+            $('#edit-title').value = title;
+            $('#edit-description').value = description;
+            // Usa '' para campos vazios em input type="date"
+            $('#edit-due-date').value = dueDate || ''; 
             editModal.classList.remove('hidden');
         }
 
-        function closeEditModal() {
+        const closeEditModal = () => {
             editModal.classList.add('hidden');
         }
 
@@ -700,9 +690,9 @@
             e.preventDefault();
             const id = editForm.dataset.taskId;
             const updatedTask = {
-                title: document.getElementById('edit-title').value,
-                description: document.getElementById('edit-description').value,
-                due_date: document.getElementById('edit-due-date').value || null,
+                title: $('#edit-title').value,
+                description: $('#edit-description').value,
+                due_date: $('#edit-due-date').value || null,
             };
 
             try {
@@ -732,7 +722,7 @@
         /* Inicializa a aplicação */
         window.onload = () => {
             loadTheme();
-            showView('main'); // Inicia na view principal
+            showView('main'); 
         }
 
         /* Fecha o modal se o usuário clicar fora dele */
