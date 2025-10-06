@@ -27,8 +27,10 @@ Assumindo que você já clonou o repositório e está no diretório do projeto:
 ```bash
 # Cria e ativa o ambiente virtual
 python -m venv venv
+
 # Windows:
 .\venv\Scripts\activate
+
 # macOS/Linux:
 source venv/bin/activate
 
