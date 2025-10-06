@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Engenharia de Prazos: Task Manager Inteligente</title>
+    <!-- Carrega Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Padrão: DARK MODE */
+        :root {
+            --bg-color: #0d1117;
+            --card-bg: #161b22; 
+            --text-color: #f0f6fc; 
+            --text-secondary: #8b949e; 
+            --border-color: #30363d; 
+            --input-bg: #0d1117;
+            --primary-accent: #3b82f6;
+            --light-mode-gradient: none; 
+        }
+        /* Light Mode */
+        .light-mode {
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-color: #1f2937;
+            --text-secondary: #6b7280; 
+            --border-color: #e5e7eb; 
+            --input-bg: #ffffff;
+            --primary-accent: #1d4ed8; 
+            --light-mode-gradient: linear-gradient(45deg, #1d4ed8, #7c3aed); /* Azul para Roxo */
+        }
+
+        /* --- Estilos Gerais (Aplica-se a ambos os temas) --- */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-secondary);
+            transition: background-color 0.4s ease-in-out, color 0.4s ease-in-out;
+        }
+        .text-header { color: var(--text-color); }
+        
+        /* Estilo Moderno para Cards e Elementos Principais */
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 1rem; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+            transition: all 0.3s;
+        }
+        
+        /* Inputs e Textareas Modernos */
+        input[type="text"], input[type="date"], textarea {
+            background-color: var(--input-bg) !important;
+            color: var(--text-color) !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 0.5rem !important;
+            transition: all 0.2s;
+        }
+        input:focus, textarea:focus {
+            box-shadow: 0 0 0 2px var(--primary-accent);
+            border-color: var(--primary-accent) !important;
+        }
+        input::placeholder, textarea::placeholder {
+             color: var(--text-secondary) !important;
+             opacity: 0.8;
+        }
+        
+        /* --- Task Items --- */
+        .task-item {
+            transition: all 0.3s ease-in-out;
+            border: 1px solid var(--border-color);
+            background-color: var(--card-bg);
+        }
+        .task-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.2);
+            opacity: 0.95;
+        }
+        
+        /* Status Concluído */
+        .completed {
+            background-color: #10191c; 
+            border-left: 4px solid #10b981; 
+            opacity: 0.6;
+            text-decoration: line-through;
+        }
+        .light-mode .completed {
+            background-color: #ecfdf5; 
+        }
+
+        /* --- Prioridade Calculada --- */
+        
+        .priority-urgente { border-left: 4px solid #ef4444; } 
+        .priority-label-urgente { background-color: #450a0a; color: #fecaca; animation: pulse 1.5s infinite; font-weight: bold;}
+        .light-mode .priority-label-urgente { background-color: #fef2f2; color: #b91c1c; }
+        
+        .priority-alta { border-left: 4px solid #f97316; } 
+        .priority-label-alta { background-color: #7c2d12; color: #fdba74; }
+        .light-mode .priority-label-alta { background-color: #fff7ed; color: #c2410c; }
+        
+        .priority-media { border-left: 4px solid var(--primary-accent); }
+        .priority-label-media { background-color: #1e3a8a; color: #bfdbfe; }
+        .light-mode .priority-label-media { background-color: #eff6ff; color: #1d4ed8; }
+
+        .priority-baixa { border-left: 4px solid #6b7280; }
+        .priority-label-baixa { background-color: #374151; color: #9ca3af; }
+        .light-mode .priority-label-baixa { background-color: #e5e7eb; color: #4b5563; }
+        
+        .priority-expirada { border-left: 4px solid #dc2626; }
+        .priority-label-expirada { background-color: #7f1d1d; color: #fca5a5; font-weight: bold;}
+        .light-mode .priority-label-expirada { background-color: #fee2e2; color: #7f1d1d; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* --- Botões de Filtro --- */
+        .filter-btn {
+            background-color: var(--border-color) !important;
+            color: var(--text-secondary) !important;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+        }
+        .filter-btn:hover {
+            transform: scale(1.02);
+            opacity: 0.9;
+        }
+        
+        /* Estilo ativo - Dark Mode */
+        .active-filter {
+            background-color: var(--primary-accent) !important; 
+            color: var(--text-color) !important;
+            font-weight: bold;
+        }
+
+        /* Estilo ativo - Light Mode (Gradiente e texto branco) */
+        .light-mode .active-filter {
+            background: var(--light-mode-gradient) !important;
+            color: white !important; 
+        }
+        
+        /* Estilo do Botão de Envio/Principal */
+        .submit-btn {
+            background-color: var(--primary-accent); 
+            transition: all 0.3s;
+        }
+
+        /* Aplica Gradiente no Botão de Envio/Principal Light Mode */
+        .light-mode .submit-btn {
+            background: var(--light-mode-gradient) !important;
+        }
+
+        /* Aplica Gradiente no Header Light Mode */
+        .light-mode .text-primary-accent-header {
+            background: var(--light-mode-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-fill-color: transparent;
+        }
+        
+        /* Botão de Volta (Back) */
+        .back-btn {
+            color: var(--text-secondary);
+            transition: color 0.2s;
+        }
+        .back-btn:hover {
+            color: var(--primary-accent);
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+
+    <!-- Toggle de Tema (Posicionado FIXO no canto) -->
+    <button id="theme-toggle" 
+            class="fixed top-4 right-4 sm:top-8 sm:right-8 p-4 rounded-full text-2xl z-20 transition duration-300 transform hover:scale-110"
+            style="background-color: var(--card-bg); border: 2px solid var(--primary-accent);"
+            title="Alternar Modo Escuro/Claro">
+        <svg id="moon-icon" xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+        </svg>
+        <svg id="sun-icon" xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-yellow-500 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+    </button>
+
+    <div class="max-w-4xl mx-auto relative">
+        <header class="text-center mb-10 pt-4">
+            <h1 class="text-4xl sm:text-5xl font-extrabold text-header mb-2 tracking-tight">
+                <span class="text-primary-accent-header" style="color: var(--primary-accent);">{'<'}</span> Engenharia de Prazos <span class="text-primary-accent-header" style="color: var(--primary-accent);">{'>'}</span>
+            </h1>
+            <p class="text-xl text-secondary" style="color: var(--text-secondary);">Gerenciamento de Fluxo de Trabalho e Urgência Automática</p>
+        </header>
+        
+        <!-- --- VIEW PRINCIPAL (Filtros e Lista) --- -->
+        <div id="main-view" class="transition duration-300">
+            
+            <!-- 1. Seção de Filtros -->
+            <div class="card p-4 mb-6">
+                <h3 class="text-lg font-semibold text-header mb-2">Filtros de Urgência</h3>
+                <div id="filter-buttons" class="flex flex-wrap gap-2 justify-center">
+                    <button data-filter="all" class="filter-btn px-4 py-2 font-medium transition active-filter">
+                        Todos
+                    </button>
+                    <button data-filter="expired" class="filter-btn px-4 py-2 font-medium transition">
+                        Expirada
+                    </button>
+                    <button data-filter="urgente" class="filter-btn px-4 py-2 font-medium transition">
+                        Urgente
+                    </button>
+                    <button data-filter="alta" class="filter-btn px-4 py-2 font-medium transition">
+                        Alta
+                    </button>
+                    <button data-filter="media" class="filter-btn px-4 py-2 font-medium transition">
+                        Média
+                    </button>
+                    <button data-filter="baixa" class="filter-btn px-4 py-2 font-medium transition">
+                        Baixa
+                    </button>
+                    <button data-filter="completed" class="filter-btn px-4 py-2 font-medium transition">
+                        Finalizadas
+                    </button>
+                </div>
+            </div>
+
+            <!-- 2. Seção da Lista de Tarefas -->
+            <div class="card p-6 mb-20">
+                <h2 class="text-2xl font-bold text-header mb-4 border-b border-solid pb-2" style="border-color: var(--border-color);">Minhas Tarefas Pendentes</h2>
+                <div id="tasks-list" class="space-y-4">
+                    <p class="text-gray-500 text-center py-4" id="loading-message">Carregando dados do servidor...</p>
+                </div>
+            </div>
+
+            <!-- Botão Flutuante de Adicionar Tarefa (Footer) -->
+            <div class="fixed bottom-0 left-0 w-full p-4 bg-transparent backdrop-blur-sm z-10" style="background-color: var(--bg-color);">
+                <div class="max-w-4xl mx-auto">
+                    <button onclick="showView('add')"
+                            class="submit-btn w-full text-white font-semibold py-3 rounded-lg shadow-2xl transition duration-300 hover:opacity-90"
+                            style="background-color: var(--primary-accent);">
+                        + Adicionar Tarefa
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- --- VIEW DE ADIÇÃO DE TAREFA (Oculta por padrão) --- -->
+        <div id="add-task-view" class="hidden transition duration-300">
+            
+            <!-- Botão de Voltar -->
+            <button onclick="showView('main')"
+                    class="back-btn flex items-center mb-8 text-xl font-semibold p-2 rounded transition duration-200 hover:bg-opacity-10" style="color: var(--text-color);">
+                <!-- Ícone de Seta para Esquerda -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="m15 18-6-6 6-6"/></svg>
+                Back
+            </button>
+            
+            <!-- Seção de Adicionar Nova Tarefa (Formulário) -->
+            <div class="card p-6 mb-8 transition duration-300">
+                <h2 class="text-2xl font-bold text-header mb-4 border-b border-solid pb-2" style="border-color: var(--border-color);">Criar Nova Atividade</h2>
+                <form id="task-form" class="grid grid-cols-1 md:grid-cols-6 gap-4">
+                    
+                    <input type="text" id="task-title" placeholder="Título da Tarefa (Ex: Relatório de Física)" required
+                           class="md:col-span-3 p-3">
+
+                    <input type="date" id="task-due-date" title="Data de Entrega (Opcional)"
+                           class="md:col-span-3 p-3">
+
+                    <textarea id="task-description" placeholder="Descrição ou Detalhes Técnicos (Opcional)"
+                              class="md:col-span-6 p-3 h-24 resize-none"></textarea>
+
+                    <button type="submit"
+                            class="submit-btn md:col-span-6 text-white font-semibold py-3 rounded-lg transition duration-300 shadow-md hover:opacity-90"
+                            style="background-color: var(--primary-accent);">
+                        Salvar Nova Tarefa
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal de Edição (Mantido fora das views para ser acessível em ambas) -->
+        <div id="edit-modal" class="hidden fixed inset-0 backdrop-blur-sm bg-gray-900 bg-opacity-70 flex justify-center items-center p-4 z-50">
+            <div class="card p-8 w-full max-w-lg">
+                <h3 class="text-2xl font-bold mb-4 text-header">Editar Tarefa</h3>
+                <form id="edit-form" data-task-id="">
+                    <div class="mb-4">
+                        <label for="edit-title" class="block text-sm font-medium" style="color: var(--text-secondary);">Título</label>
+                        <input type="text" id="edit-title" required class="mt-1 p-3 w-full">
+                    </div>
+                    
+                    <div class="mb-4">
+                         <label for="edit-due-date" class="block text-sm font-medium" style="color: var(--text-secondary);">Data de Entrega</label>
+                         <input type="date" id="edit-due-date" class="mt-1 p-3 w-full">
+                    </div>
+
+                    <div class="mb-6">
+                        <label for="edit-description" class="block text-sm font-medium" style="color: var(--text-secondary);">Descrição</label>
+                        <textarea id="edit-description" rows="3" class="mt-1 p-3 w-full resize-none"></textarea>
+                    </div>
+
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeEditModal()"
+                                class="px-4 py-2 border rounded-lg hover:opacity-80 transition" style="color: var(--text-color); border-color: var(--border-color); background-color: var(--input-bg);">
+                            Cancelar
+                        </button>
+                        <button type="submit" style="background-color: var(--primary-accent);"
+                                class="submit-btn px-4 py-2 text-white rounded-lg transition duration-300 hover:opacity-90">
+                            Salvar Alterações
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const mainView = document.getElementById('main-view');
+        const addTaskView = document.getElementById('add-task-view');
+        const taskList = document.getElementById('tasks-list');
+        const taskForm = document.getElementById('task-form');
+        const editModal = document.getElementById('edit-modal');
+        const editForm = document.getElementById('edit-form');
+        const filterButtons = document.getElementById('filter-buttons');
+        const loadingMessage = document.getElementById('loading-message');
+        const themeToggle = document.getElementById('theme-toggle');
+        const sunIcon = document.getElementById('sun-icon');
+        const moonIcon = document.getElementById('moon-icon');
+
+        const API_URL = '/tasks';
+
+        let allTasks = []; 
+        let currentFilter = 'all'; 
+        
+        // --- Lógica de Navegação ---
+        function showView(viewName) {
+            if (viewName === 'main') {
+                mainView.classList.remove('hidden');
+                addTaskView.classList.add('hidden');
+                loadTasks(); // Recarrega a lista para ver a nova tarefa
+            } else if (viewName === 'add') {
+                mainView.classList.add('hidden');
+                addTaskView.classList.remove('hidden');
+                taskForm.reset(); // Limpa o formulário ao entrar na view de adição
+            }
+        }
+
+        // --- Lógica de Tema (Dark/Light Mode) ---
+        function applyTheme(theme) {
+            const isDarkMode = theme === 'dark';
+            document.body.classList.toggle('light-mode', !isDarkMode);
+            moonIcon.classList.toggle('hidden', !isDarkMode);
+            sunIcon.classList.toggle('hidden', isDarkMode);
+            localStorage.setItem('theme', theme);
+        }
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = document.body.classList.contains('light-mode') ? 'light' : 'dark';
+            applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
+        });
+
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                applyTheme(savedTheme);
+            } else {
+                applyTheme('dark'); 
+            }
+        }
+
+        // --- LÓGICA DO APP ---
+        
+        const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+        async function safeFetch(url, options = {}) {
+            let delay = 100;
+            const maxRetries = 3;
+
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const response = await fetch(url, options);
+
+                    if (!response.ok) {
+                        if (response.status !== 404 && i < maxRetries - 1) {
+                            console.warn(`Erro ${response.status} na API. Tentando novamente em ${delay}ms...`);
+                            await sleep(delay);
+                            delay *= 2; 
+                            continue;
+                        }
+                        const errorData = await response.json().catch(() => ({ message: response.statusText }));
+                        throw new Error(`Erro na API: ${errorData.message || response.statusText}`);
+                    }
+                    return response.json();
+
+                } catch (error) {
+                    if (i === maxRetries - 1) {
+                        console.error('Falha na requisição após várias tentativas:', error);
+                        const errorMessage = document.createElement('p');
+                        errorMessage.className = 'text-red-400 text-center font-semibold mt-4';
+                        errorMessage.textContent = `Falha ao conectar com o servidor: ${error.message}`;
+                        taskList.innerHTML = '';
+                        taskList.appendChild(errorMessage);
+                        throw error;
+                    }
+                }
+            }
+        }
+        
+        function getDaysUntil(dateString) {
+            if (!dateString) return Infinity;
+            const oneDay = 1000 * 60 * 60 * 24;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); 
+            const taskDate = new Date(dateString + 'T00:00:00');
+
+            const diffTime = taskDate.getTime() - today.getTime();
+            return Math.ceil(diffTime / oneDay); 
+        }
+
+        function calculateUrgencyLevel(task) {
+            if (task.is_completed) return { level: 0, name: 'Finalizada', sortValue: -1, cssClass: 'completed' }; 
+
+            const daysUntil = getDaysUntil(task.due_date);
+            
+            if (daysUntil < 0) {
+                return { level: 4, name: 'EXPIRADA', sortValue: 4, cssClass: 'expirada' }; 
+            }
+            
+            if (daysUntil <= 2) {
+                return { level: 3, name: 'URGENTE', sortValue: 3, cssClass: 'urgente' };
+            } 
+            
+            if (daysUntil >= 3 && daysUntil <= 5) {
+                return { level: 2, name: 'ALTA', sortValue: 2, cssClass: 'alta' };
+            }
+            
+            if (daysUntil > 5 && daysUntil !== Infinity) {
+                return { level: 1, name: 'MÉDIA', sortValue: 1, cssClass: 'media' };
+            }
+
+            return { level: 0, name: 'BAIXA', sortValue: 0, cssClass: 'baixa' }; 
+        }
+
+        // --- FUNÇÕES DE FILTRAGEM ---
+
+        function filterTasks(filterType) {
+            let filteredList = allTasks;
+            
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active-filter');
+            });
+            const activeBtn = document.querySelector(`[data-filter="${filterType}"]`);
+            if (activeBtn) {
+                 activeBtn.classList.add('active-filter');
+            }
+
+
+            switch (filterType) {
+                case 'expired':
+                    filteredList = allTasks.filter(task => calculateUrgencyLevel(task).name === 'EXPIRADA' && !task.is_completed);
+                    break;
+                case 'urgente':
+                    filteredList = allTasks.filter(task => calculateUrgencyLevel(task).name === 'URGENTE' && !task.is_completed);
+                    break;
+                case 'alta':
+                    filteredList = allTasks.filter(task => calculateUrgencyLevel(task).name === 'ALTA' && !task.is_completed);
+                    break;
+                case 'media':
+                    filteredList = allTasks.filter(task => calculateUrgencyLevel(task).name === 'MÉDIA' && !task.is_completed);
+                    break;
+                case 'baixa':
+                    filteredList = allTasks.filter(task => calculateUrgencyLevel(task).name === 'BAIXA' && !task.is_completed);
+                    break;
+                case 'completed':
+                    filteredList = allTasks.filter(task => task.is_completed);
+                    break;
+                case 'all':
+                default:
+                    filteredList = allTasks; 
+                    break;
+            }
+            
+            renderTaskList(filteredList);
+            currentFilter = filterType;
+        }
+
+        /*  RENDERIZAÇÃO */
+
+        function formatDueDate(dateString) {
+            if (!dateString) return 'Sem Data';
+            const days = getDaysUntil(dateString);
+
+            if (days < 0) return `VENCIDA (${-days} dias)`;
+            if (days === 0) return 'HOJE';
+            if (days === 1) return 'Amanhã';
+
+            const [year, month, day] = dateString.split('-');
+            return `${day}/${month}/${year}`;
+        }
+
+        function renderTask(task) {
+            const urgency = calculateUrgencyLevel(task);
+            const priorityClass = `priority-${urgency.cssClass}`;
+            const priorityLabelClass = `priority-label-${urgency.cssClass}`;
+            
+            const itemClass = task.is_completed 
+                ? 'completed' 
+                : (urgency.name === 'EXPIRADA' ? 'priority-expirada card' : `card ${priorityClass}`);
+            
+            const taskElement = document.createElement('div');
+            taskElement.className = `task-item p-4 rounded-xl flex items-start space-x-4 ${itemClass}`;
+            taskElement.dataset.id = task.id;
+
+            const checkboxHtml = `
+                <input type="checkbox" ${task.is_completed ? 'checked' : ''}
+                       class="mt-1 h-5 w-5 rounded cursor-pointer" style="border-color: var(--border-color); background-color: var(--input-bg); color: var(--primary-accent);"
+                       onchange="toggleStatus(${task.id}, event.target.checked)">
+            `;
+            
+            const isExpired = urgency.name === 'EXPIRADA';
+            const dateLabelClass = task.is_completed ? 'bg-emerald-800 text-emerald-300' : (isExpired ? 'priority-label-expirada' : priorityLabelClass);
+
+            const contentHtml = `
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center space-x-2 mb-1">
+                        <span class="task-title text-lg font-semibold text-header truncate">${task.title}</span>
+                        <span class="text-xs font-medium px-2 py-0.5 rounded-full ${dateLabelClass}">
+                            ${formatDueDate(task.due_date)}
+                        </span>
+                        ${!task.is_completed ? 
+                            `<span class="text-xs font-medium px-2 py-0.5 rounded-full ${priorityLabelClass}" title="Nível de Urgência: ${urgency.name}">
+                                ${urgency.name}
+                            </span>` : ''}
+                    </div>
+                    <p class="task-description text-sm" style="color: var(--text-secondary);">${task.description || 'Nenhuma descrição fornecida.'}</p>
+                </div>
+            `;
+
+            const safeDescription = (task.description || '').replace(/'/g, "\\'").replace(/"/g, '\\"');
+            
+            const actionsHtml = `
+                <div class="flex space-x-2 ml-4">
+                    <button onclick="openEditModal(${task.id}, '${task.title}', '${safeDescription}', '${task.due_date}')"
+                            title="Editar"
+                            class="p-2 rounded-full transition duration-150 hover:opacity-80" style="color: var(--text-secondary); background-color: var(--input-bg);">
+                        <!-- Ícone de Lápis (Lucide Icon) -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+                    </button>
+                    <button onclick="deleteTask(${task.id})"
+                            title="Excluir"
+                            class="p-2 rounded-full transition duration-150 hover:opacity-80" style="color: var(--text-secondary); background-color: var(--input-bg);">
+                        <!-- Ícone de Lixo (Lucide Icon) -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                    </button>
+                </div>
+            `;
+
+            taskElement.innerHTML = checkboxHtml + contentHtml + actionsHtml;
+            return taskElement;
+        }
+
+        function renderTaskList(tasks) {
+             taskList.innerHTML = '';
+             if (tasks.length === 0) {
+                 taskList.innerHTML = `
+                     <p class="text-gray-500 text-center py-4">
+                         Nenhuma tarefa encontrada para este filtro.
+                     </p>
+                 `;
+                 return;
+             }
+             tasks.forEach(task => {
+                 taskList.appendChild(renderTask(task));
+             });
+        }
+
+
+        async function loadTasks() {
+            try {
+                loadingMessage.textContent = 'Carregando tarefas...';
+                taskList.innerHTML = '';
+                const response = await safeFetch(API_URL);
+                allTasks = response; 
+
+                if (allTasks.length === 0) {
+                    taskList.innerHTML = `
+                        <p class="text-gray-500 text-center py-4">
+                            🎉 Parabéns! Nenhuma tarefa pendente. Crie sua primeira atividade!
+                        </p>
+                    `;
+                }
+                
+                /*  ORDENAÇÃO CLIENTE-SIDE POR URGÊNCIA */
+                allTasks.sort((a, b) => {
+                    const urgencyA = calculateUrgencyLevel(a);
+                    const urgencyB = calculateUrgencyLevel(b);
+
+                    /* 1. Concluídas vão para o final */
+                    if (a.is_completed !== b.is_completed) {
+                        return a.is_completed ? 1 : -1;
+                    }
+
+                    /* 2. Prioridade de Urgência (sortValue)*/
+                    if (urgencyA.sortValue !== urgencyB.sortValue) {
+                        return urgencyB.sortValue - urgencyA.sortValue; 
+                    }
+                    
+                    /* 3. Data de Entrega */
+                    if (a.due_date && b.due_date) {
+                         const daysA = getDaysUntil(a.due_date);
+                         const daysB = getDaysUntil(b.due_date);
+                         return daysA - daysB; 
+                    }
+
+                    return b.id - a.id; 
+                });
+
+                filterTasks(currentFilter);
+
+            } catch (error) {
+                console.log('Não foi possível carregar a lista de tarefas.');
+            }
+        }
+
+        /* CRUD HANDLERS */
+
+        taskForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const titleInput = document.getElementById('task-title');
+            const descriptionInput = document.getElementById('task-description');
+            const dueDateInput = document.getElementById('task-due-date');
+
+            const newTask = {
+                title: titleInput.value,
+                description: descriptionInput.value,
+                due_date: dueDateInput.value || null,
+            };
+
+            try {
+                await safeFetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newTask)
+                });
+
+                taskForm.reset();
+                showView('main'); // Volta para a página principal
+            } catch (error) {
+                console.error("Erro ao adicionar tarefa:", error);
+            }
+        });
+
+        async function toggleStatus(id, isCompleted) {
+            try {
+                await safeFetch(`${API_URL}/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ is_completed: isCompleted })
+                });
+                loadTasks();
+            } catch (error) {
+                console.error("Erro ao atualizar status:", error);
+            }
+        }
+
+        async function deleteTask(id) {
+            const confirmed = true; 
+            if (confirmed) {
+                try {
+                    await safeFetch(`${API_URL}/${id}`, {
+                        method: 'DELETE'
+                    });
+                    allTasks = allTasks.filter(task => task.id !== id);
+                    filterTasks(currentFilter);
+                    
+                    if (allTasks.length === 0) {
+                        loadTasks();
+                    }
+                } catch (error) {
+                    console.error("Erro ao excluir tarefa:", error);
+                }
+            }
+        }
+
+        /* MODAL DE EDIÇÃO */
+
+        function openEditModal(id, title, description, dueDate) {
+            document.getElementById('edit-form').dataset.taskId = id;
+            document.getElementById('edit-title').value = title;
+            document.getElementById('edit-description').value = description;
+            document.getElementById('edit-due-date').value = dueDate || '';
+            editModal.classList.remove('hidden');
+        }
+
+        function closeEditModal() {
+            editModal.classList.add('hidden');
+        }
+
+        editForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = editForm.dataset.taskId;
+            const updatedTask = {
+                title: document.getElementById('edit-title').value,
+                description: document.getElementById('edit-description').value,
+                due_date: document.getElementById('edit-due-date').value || null,
+            };
+
+            try {
+                await safeFetch(`${API_URL}/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updatedTask)
+                });
+
+                closeEditModal();
+                loadTasks(); 
+            } catch (error) {
+                console.error("Erro ao salvar edição:", error);
+            }
+        });
+
+        /* EVENTOS DE FILTRO */
+
+        filterButtons.addEventListener('click', (e) => {
+            const filterType = e.target.dataset.filter;
+            if (filterType) {
+                filterTasks(filterType);
+            }
+        });
+
+
+        /* Inicializa a aplicação */
+        window.onload = () => {
+            loadTheme();
+            showView('main'); // Inicia na view principal
+        }
+
+        /* Fecha o modal se o usuário clicar fora dele */
+        editModal.addEventListener('click', (e) => {
+            if (e.target === editModal) {
+                closeEditModal();
+            }
+        });
+
+    </script>
+</body>
+</html>
