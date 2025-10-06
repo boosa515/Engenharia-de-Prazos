@@ -1,5 +1,13 @@
 # < Engenharia de Prazos: Task Manager Inteligente > ⚙️
 
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python Badge"/>
+  <img src="https://img.shields.io/badge/Flask-000000?style=for-the-badge&logo=flask&logoColor=white" alt="Flask Badge"/>
+  <img src="https://img.shields.io/badge/SQLite-07405E?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite Badge"/>
+  <img src="https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind CSS Badge"/>
+  <img src="https://img.shields.io/badge/Full_Stack-FFC72C?style=for-the-badge" alt="Full Stack Badge"/>
+</p>
+
 ## 💡 Sobre o Projeto
 
 Gerenciador de tarefas Full-Stack desenvolvido com **Python (Flask)** e **SQLite**, focado em gerenciamento de prazos complexos.
