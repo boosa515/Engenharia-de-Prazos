@@ -11,6 +11,7 @@
 <br/>
 
 <br/>
+
 ## 💡 Sobre o Projeto
 
 Gerenciador de tarefas Full-Stack desenvolvido com **Python (Flask)** e **SQLite**, focado em gerenciamento de prazos complexos.
@@ -19,6 +20,7 @@ O principal diferencial é o **motor de Priorização de Urgência Automática**
 <br/>
 
 <br/>
+
 ### ⚙️ Principais Funcionalidades
 
 * **Priorização Automática:** Classificação e reordenação de tarefas baseada na proximidade do prazo (**Urgente**, **Alta**, **Média**, **Expirada**).
