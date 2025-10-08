@@ -29,6 +29,10 @@ O principal diferencial é o **motor de Priorização de Urgência Automática**
 
 ---
 
+<br/>
+
+<br/>
+
 ## 🛠️ Instalação e Execução
 
 ### Pré-requisitos
