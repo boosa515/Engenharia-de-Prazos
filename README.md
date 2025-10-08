@@ -39,6 +39,10 @@ O principal diferencial é o **motor de Priorização de Urgência Automática**
 
 * Python 3.x
 
+<br/>
+
+<br/>
+
 ### 1. Configurar o Ambiente
 
 Assumindo que você já clonou o repositório e está no diretório do projeto:
