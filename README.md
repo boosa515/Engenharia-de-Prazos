@@ -43,7 +43,7 @@ O principal diferencial é o **motor de Priorização de Urgência Automática**
 
 <br/>
 
-### 1. Configurar o Ambiente
+# 1. Configurar o Ambiente
 
 Assumindo que você já clonou o repositório e está no diretório do projeto:
 
@@ -51,7 +51,7 @@ Assumindo que você já clonou o repositório e está no diretório do projeto:
 
 <br/>
 
-# Cria e ativa o ambiente virtual
+### Cria e ativa o ambiente virtual
 ```bash
 python -m venv venv
 ```
@@ -59,7 +59,7 @@ python -m venv venv
 
 <br/>
 
-# Windows:
+### Windows:
 ```bash
 .\venv\Scripts\activate
 ```
@@ -68,7 +68,7 @@ python -m venv venv
 
 <br/>
 
-# macOS/Linux:
+### macOS/Linux:
 ```bash
 source venv/bin/activate
 ```
@@ -76,7 +76,7 @@ source venv/bin/activate
 
 <br/>
 
-# Instala as dependências (Flask)
+### Instala as dependências (Flask)
 ```bash
 pip install -r requirements.txt
 ```
@@ -91,7 +91,7 @@ Com o ambiente virtual ativado, execute o servidor Flask. O banco de dados tasks
 
 <br/>
 
-# 1. Define o arquivo principal do Flask
+### 1. Define o arquivo principal do Flask
 ```bash
 export FLASK_APP=app.py 
 ```
@@ -100,7 +100,7 @@ export FLASK_APP=app.py
 
 <br/>
 
-# 2. Inicia o servidor
+### 2. Inicia o servidor
 ```bash
 flask run
 ```
@@ -108,6 +108,6 @@ flask run
 
 <br/>
 
-# 3. Acesso
+### 3. Acesso
 ```bash
 Abra seu navegador e acesse: http://127.0.0.1:5000/
