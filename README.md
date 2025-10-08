@@ -91,7 +91,7 @@ Com o ambiente virtual ativado, execute o servidor Flask. O banco de dados tasks
 
 <br/>
 
-### 1. Define o arquivo principal do Flask
+### Define o arquivo principal do Flask
 ```bash
 export FLASK_APP=app.py 
 ```
@@ -100,7 +100,7 @@ export FLASK_APP=app.py
 
 <br/>
 
-### 2. Inicia o servidor
+### Inicia o servidor
 ```bash
 flask run
 ```
@@ -108,6 +108,6 @@ flask run
 
 <br/>
 
-### 3. Acesso
+### Acesso
 ```bash
 Abra seu navegador e acesse: http://127.0.0.1:5000/
