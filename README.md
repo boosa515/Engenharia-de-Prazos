@@ -84,7 +84,7 @@ pip install -r requirements.txt
 
 <br/>
 
-2. Rodar a Aplicação
+# 2. Rodar a Aplicação
 Com o ambiente virtual ativado, execute o servidor Flask. O banco de dados tasks.db será criado automaticamente.
 
 <br/>
@@ -108,6 +108,6 @@ flask run
 
 <br/>
 
-3. Acesso
+# 3. Acesso
 ```bash
 Abra seu navegador e acesse: http://127.0.0.1:5000/
