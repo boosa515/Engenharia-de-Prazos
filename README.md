@@ -56,7 +56,6 @@ Assumindo que você já clonou o repositório e está no diretório do projeto:
 python -m venv venv
 ```
 <br/>
-
 <br/>
 
 ### Windows:
@@ -65,7 +64,6 @@ python -m venv venv
 ```
 
 <br/>
-
 <br/>
 
 ### macOS/Linux:
@@ -73,7 +71,6 @@ python -m venv venv
 source venv/bin/activate
 ```
 <br/>
-
 <br/>
 
 ### Instala as dependências (Flask)
@@ -81,7 +78,6 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 <br/>
-
 <br/>
 
 # 2. Rodar a Aplicação
@@ -97,7 +93,6 @@ export FLASK_APP=app.py
 ```
 
 <br/>
-
 <br/>
 
 ### Inicia o servidor
@@ -105,7 +100,6 @@ export FLASK_APP=app.py
 flask run
 ```
 <br/>
-
 <br/>
 
 ### Acesso
